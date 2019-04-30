@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/affine" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
