@@ -21,9 +21,12 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
+from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction
+
+from qgis.core import QgsProject, QgsMapLayer, Qgis
+import array
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -193,10 +196,41 @@ class Affine:
 
         # show the dialog
         self.dlg.show()
-        # Run the dialog event loop
-        result = self.dlg.exec_()
-        # See if OK was pressed
-        if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            pass
+
+        # Clear widgets 
+        self.dlg.Slayer_Cbox.clear()
+        self.dlg.a_Ledit.clear()
+        self.dlg.b_Ledit.clear()
+        self.dlg.c_Ledit.clear()
+        self.dlg.d_Ledit.clear()
+        self.dlg.e_Ledit.clear()
+        self.dlg.f_Ledit.clear()
+
+        layer_ids = []
+
+        # Load vector layers
+        for layer in QgsProject.instance().mapLayers().values():
+            if layer.type() == QgsMapLayer.VectorLayer:
+                self.dlg.Slayer_Cbox.addItem(layer.name())
+            else:
+                continue
+
+        self.dlg.Transform1_Push.clicked.connect(self.transform)
+    def transform(self):
+        """Transforms features in selected layer"""
+
+        a = float(self.dlg.a_Ledit.text())
+        b = float(self.dlg.b_Ledit.text())
+        c = float(self.dlg.c_Ledit.text())
+        d = float(self.dlg.d_Ledit.text())
+        e = float(self.dlg.e_Ledit.text())
+        f = float(self.dlg.f_Ledit.text())
+        coor_new = array.array('f',[0.0,0.0])
+        layer_name = self.dlg.Slayer_Cbox.currentText()
+        layer = QgsProject.instance().mapLayersByName(layer_name)[0]
+        for feature in layer.getFeatures():
+            id = feature.id()
+            coor = feature.geometry().asPoint()
+            coor_new[1] = coor[1]*a+coor[0]*b+c
+            coor_new[0] = coor[1]*d+coor[0]*e+f
+            print("point {0}; Y = {1:.3f} m; X = {2:.3f} m".format(id,coor_new[0],coor_new[1]))
