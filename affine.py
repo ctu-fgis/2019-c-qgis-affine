@@ -21,12 +21,12 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
+from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt, QVariant
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction
-
-from qgis.core import QgsProject, QgsMapLayer, Qgis
-import array
+from PyQt5.QtWidgets import QFileDialog
+from qgis.core import QgsProject, QgsMapLayer, Qgis, QgsPointXY, QgsGeometry, QgsFeature, QgsVectorLayer
+from qgis._core import QgsVectorFileWriter
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -205,8 +205,17 @@ class Affine:
         self.dlg.d_Ledit.clear()
         self.dlg.e_Ledit.clear()
         self.dlg.f_Ledit.clear()
+        self.dlg.out_Ledit.clear()
 
-        layer_ids = []
+        #       DELETE     !!!!   #{ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        self.dlg.a_Ledit.setText('1')
+        self.dlg.b_Ledit.setText('0')
+        self.dlg.c_Ledit.setText('1')
+        self.dlg.d_Ledit.setText('0')
+        self.dlg.e_Ledit.setText('1')
+        self.dlg.f_Ledit.setText('1')
+        self.dlg.out_Ledit.setText('D:/Dokumenty/škola/2018-19/2. semestr/Free software GIS/QGIS_Plugins/affine_out')
+        #       DELETE     !!!!   #}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # Load vector layers
         for layer in QgsProject.instance().mapLayers().values():
@@ -216,6 +225,19 @@ class Affine:
                 continue
 
         self.dlg.Transform1_Push.clicked.connect(self.transform)
+        self.dlg.out_TButton.clicked.connect(self.select_output_directory)
+
+        # Load output formats
+        self.dlg.format_Cbox.addItem('GPKG')
+        self.dlg.format_Cbox.addItem('shp')
+
+    def select_output_directory(self):
+        """Lets user to choose output directory"""
+        self.dirname = QFileDialog.getExistingDirectory(
+            self.dlg, "Select directory ", os.path.expanduser("~")
+        )
+        self.dlg.out_Ledit.setText(self.dirname)
+
     def transform(self):
         """Transforms features in selected layer"""
 
@@ -225,12 +247,41 @@ class Affine:
         d = float(self.dlg.d_Ledit.text())
         e = float(self.dlg.e_Ledit.text())
         f = float(self.dlg.f_Ledit.text())
-        coor_new = array.array('f',[0.0,0.0])
+        out = self.dlg.out_Ledit.text()
+
         layer_name = self.dlg.Slayer_Cbox.currentText()
         layer = QgsProject.instance().mapLayersByName(layer_name)[0]
+        
+        #layer_new = layer
+        #caps = layer_new.dataProvider().capabilities()
+        #print(caps)
+        
+        #layer_new = QgsVectorFileWriter("layer_new.shp", "UTF-8", provider.fields(), provider.wkbType(), provider.crs())
+        
+        #layer_new = QgsVectorLayer("Point", "temporary_points", "memory")
+        #pr = layer_new.dataProvider()
+        #print(layer.dataProvider.fields())
+        #pr.addAttributes(layer.fields())
+        #layer_new.updateFields()
+
         for feature in layer.getFeatures():
             id = feature.id()
             coor = feature.geometry().asPoint()
-            coor_new[1] = coor[1]*a+coor[0]*b+c
-            coor_new[0] = coor[1]*d+coor[0]*e+f
-            print("point {0}; Y = {1:.3f} m; X = {2:.3f} m".format(id,coor_new[0],coor_new[1]))
+            coor_new_x = coor[1]*a+coor[0]*b+c
+            coor_new_y = coor[1]*d+coor[0]*e+f
+            print("point {0}; Y = {1:f} m; X = {2:f} m".format(id,coor_new_y,coor_new_x))
+            coor_new_qg = QgsGeometry.fromPointXY(QgsPointXY(coor_new_y,coor_new_x))
+            #feature_new = QgsFeature()
+            #feature_new.setGeometry(coor_new_qg)
+            #feature_new.setAttributes(feature.attributes())
+            #pr.addFeatures(feature_new)
+            #layer_new.updateExtents()
+
+        #for feature_new in layer_new.getFeatures():
+            #if(feature_new.id() == 1):
+                #print(feature_new.geometry())
+
+        #overwrite name and export according to format !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #del layer_new
+        
+        #QgsVectorFileWriter.writeAsVectorFormat('layer_new', out + '/' + layer_name + '_transformed',"")
