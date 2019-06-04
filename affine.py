@@ -248,40 +248,30 @@ class Affine:
         e = float(self.dlg.e_Ledit.text())
         f = float(self.dlg.f_Ledit.text())
         out = self.dlg.out_Ledit.text()
+        format = self.dlg.format_Cbox.currentText()
 
         layer_name = self.dlg.Slayer_Cbox.currentText()
         layer = QgsProject.instance().mapLayersByName(layer_name)[0]
-        
-        #layer_new = layer
-        #caps = layer_new.dataProvider().capabilities()
-        #print(caps)
-        
-        #layer_new = QgsVectorFileWriter("layer_new.shp", "UTF-8", provider.fields(), provider.wkbType(), provider.crs())
-        
-        #layer_new = QgsVectorLayer("Point", "temporary_points", "memory")
-        #pr = layer_new.dataProvider()
-        #print(layer.dataProvider.fields())
-        #pr.addAttributes(layer.fields())
-        #layer_new.updateFields()
+        crs = layer.crs().authid()
+
+        layer_new = QgsVectorLayer("point?crs=" + crs, "temporary_layer", "memory")
+        pr = layer_new.dataProvider()
+        pr.addAttributes(layer.fields())
+        layer_new.updateFields()
 
         for feature in layer.getFeatures():
             id = feature.id()
             coor = feature.geometry().asPoint()
             coor_new_x = coor[1]*a+coor[0]*b+c
             coor_new_y = coor[1]*d+coor[0]*e+f
-            print("point {0}; Y = {1:f} m; X = {2:f} m".format(id,coor_new_y,coor_new_x))
             coor_new_qg = QgsGeometry.fromPointXY(QgsPointXY(coor_new_y,coor_new_x))
-            #feature_new = QgsFeature()
-            #feature_new.setGeometry(coor_new_qg)
-            #feature_new.setAttributes(feature.attributes())
-            #pr.addFeatures(feature_new)
-            #layer_new.updateExtents()
+            feature_new = QgsFeature()
+            feature_new.setGeometry(coor_new_qg)
+            feature_new.setAttributes(feature.attributes())
+            pr.addFeatures([feature_new])
+            layer_new.updateExtents()
 
-        #for feature_new in layer_new.getFeatures():
-            #if(feature_new.id() == 1):
-                #print(feature_new.geometry())
-
-        #overwrite name and export according to format !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        #del layer_new
-        
-        #QgsVectorFileWriter.writeAsVectorFormat('layer_new', out + '/' + layer_name + '_transformed',"")
+        if(format == 'GPKG'):
+           QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + layer_name + '_transformed',"")
+        if(format == 'shp'):
+           QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + layer_name + '_transformed',"UTF-8",driverName="ESRI Shapefile")
