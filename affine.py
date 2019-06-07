@@ -33,7 +33,7 @@ from .resources import *
 # Import the code for the dialog
 from .affine_dialog import AffineDialog
 import os.path
-
+import ogr
 
 class Affine:
     """QGIS Plugin Implementation."""
@@ -199,6 +199,7 @@ class Affine:
 
         # Clear widgets 
         self.dlg.Slayer_Cbox.clear()
+        self.dlg.format_Cbox.clear()
         self.dlg.a_Ledit.clear()
         self.dlg.b_Ledit.clear()
         self.dlg.c_Ledit.clear()
@@ -206,6 +207,8 @@ class Affine:
         self.dlg.e_Ledit.clear()
         self.dlg.f_Ledit.clear()
         self.dlg.out_Ledit.clear()
+
+        self.dlg.Name_Ledit.setText('New_transformed_layer')
 
         #       DELETE     !!!!   #{ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         self.dlg.a_Ledit.setText('1')
@@ -230,6 +233,8 @@ class Affine:
         # Load output formats
         self.dlg.format_Cbox.addItem('GPKG')
         self.dlg.format_Cbox.addItem('shp')
+        self.dlg.format_Cbox.addItem('GeoJSON')
+        self.dlg.format_Cbox.addItem('kml')
 
     def select_output_directory(self):
         """Lets user to choose output directory"""
@@ -247,6 +252,7 @@ class Affine:
         d = float(self.dlg.d_Ledit.text())
         e = float(self.dlg.e_Ledit.text())
         f = float(self.dlg.f_Ledit.text())
+        name = self.dlg.Name_Ledit.text()
         out = self.dlg.out_Ledit.text()
         format = self.dlg.format_Cbox.currentText()
 
@@ -272,7 +278,7 @@ class Affine:
             else:
                 type = "multipolygon"
         else:
-            print("Unexpected type of geometry")
+            self.iface.messageBar().pushMessage("Unexpected type of geometry. Transformation is impossible.", level=Qgis.Critical, duration=3)
 
         layer_new = QgsVectorLayer(type + "?crs=" + crs, "temporary_layer", "memory")
         pr = layer_new.dataProvider()
@@ -353,9 +359,15 @@ class Affine:
 
         # creating file with new layer
         if(format == 'GPKG'):
-            error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + layer_name + '_transformed',"")
+            error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"")
         if(format == 'shp'):
-            error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + layer_name + '_transformed',"UTF-8",driverName="ESRI Shapefile")
+            error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="ESRI Shapefile")
+        if(format == 'GeoJSON'):
+            error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="GeoJSON")
+        if(format == 'kml'):
+            error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="KML")
 
         if error[0] == QgsVectorFileWriter.NoError:
-            print("File created")
+            self.iface.messageBar().pushMessage('File created.', level=Qgis.Info, duration=3)
+        else:
+            self.iface.messageBar().pushMessage('File not created!', level=Qgis.Critical, duration=3)
