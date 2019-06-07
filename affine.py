@@ -25,7 +25,7 @@ from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt,
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction
 from PyQt5.QtWidgets import QFileDialog
-from qgis.core import QgsProject, QgsMapLayer, Qgis, QgsPointXY, QgsGeometry, QgsFeature, QgsVectorLayer
+from qgis.core import QgsProject, QgsMapLayer, Qgis, QgsPoint, QgsPointXY, QgsGeometry, QgsFeature, QgsVectorLayer, QgsWkbTypes
 from qgis._core import QgsVectorFileWriter
 
 # Initialize Qt resources from file resources.py
@@ -210,7 +210,7 @@ class Affine:
         #       DELETE     !!!!   #{ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         self.dlg.a_Ledit.setText('1')
         self.dlg.b_Ledit.setText('0')
-        self.dlg.c_Ledit.setText('1')
+        self.dlg.c_Ledit.setText('200000')
         self.dlg.d_Ledit.setText('0')
         self.dlg.e_Ledit.setText('1')
         self.dlg.f_Ledit.setText('1')
@@ -254,24 +254,108 @@ class Affine:
         layer = QgsProject.instance().mapLayersByName(layer_name)[0]
         crs = layer.crs().authid()
 
-        layer_new = QgsVectorLayer("point?crs=" + crs, "temporary_layer", "memory")
+        # creating new layer
+        feature_geom = layer.getFeature(1).geometry()
+        if feature_geom.type() == QgsWkbTypes.PointGeometry:
+            if QgsWkbTypes.isSingleType(feature_geom.wkbType()):
+                type = "point"
+            else:
+                type = "multipoint"
+        elif feature_geom.type() == QgsWkbTypes.LineGeometry:
+            if QgsWkbTypes.isSingleType(feature_geom.wkbType()):
+                type = "linestring"
+            else:
+                type = "multilinestring"
+        elif feature_geom.type() == QgsWkbTypes.PolygonGeometry:
+            if QgsWkbTypes.isSingleType(feature_geom.wkbType()):
+                type = "polygon"
+            else:
+                type = "multipolygon"
+        else:
+            print("Unexpected type of geometry")
+
+        layer_new = QgsVectorLayer(type + "?crs=" + crs, "temporary_layer", "memory")
         pr = layer_new.dataProvider()
         pr.addAttributes(layer.fields())
         layer_new.updateFields()
 
+        # adding new features into new layer
         for feature in layer.getFeatures():
-            id = feature.id()
-            coor = feature.geometry().asPoint()
-            coor_new_x = coor[1]*a+coor[0]*b+c
-            coor_new_y = coor[1]*d+coor[0]*e+f
-            coor_new_qg = QgsGeometry.fromPointXY(QgsPointXY(coor_new_y,coor_new_x))
+            # Point layer
+            if type == "point":
+                coor = feature.geometry().asPoint()
+                coor_new_x = coor.x()*a+coor.y()*b+c
+                coor_new_y = coor.x()*d+coor.y()*e+f
+                geometry_new = QgsGeometry.fromPointXY(QgsPointXY(coor_new_x,coor_new_y))
+            if type == "multipoint":
+                segments_new =[]
+                coor = feature.geometry().asMultiPoint()
+                for segment in coor:
+                    coor_new_x = segment.x()*a+segment.y()*b+c
+                    coor_new_y = segment.x()*d+segment.y()*e+f
+                    segments_new.append(QgsPointXY(coor_new_x,coor_new_y))
+                geometry_new = QgsGeometry.fromMultiPointXY(segments_new)
+
+            # Polyline layer
+            if type == "linestring":
+                segments_new =[]
+                coor = feature.geometry().asPolyline()
+                for segment in coor:
+                    coor_new_x = segment.x()*a+segment.y()*b+c
+                    coor_new_y = segment.x()*d+segment.y()*e+f
+                    segments_new.append(QgsPointXY(coor_new_x,coor_new_y))
+                geometry_new = QgsGeometry.fromPolylineXY(segments_new)
+            if type == "multilinestring":
+                segments1_new = []
+                coor = feature.geometry().asMultiPolyline()
+                for segment1 in coor:
+                    segments2_new = []
+                    for segment2 in segment1:
+                        coor_new_x = segment2.x()*a+segment2.y()*b+c
+                        coor_new_y = segment2.x()*d+segment2.y()*e+f
+                        segments2_new.append(QgsPointXY(coor_new_x,coor_new_y))
+                    segments1_new.append(segments2_new)
+                geometry_new = QgsGeometry.fromMultiPolylineXY(segments1_new)
+
+            # Polygon layer
+            if type == "polygon":
+                segments1_new = []
+                coor = feature.geometry().asPolygon()
+                for segment1 in coor:
+                    segments2_new = []
+                    for segment2 in segment1:
+                        coor_new_x = segment2.x()*a+segment2.y()*b+c
+                        coor_new_y = segment2.x()*d+segment2.y()*e+f
+                        segments2_new.append(QgsPointXY(coor_new_x,coor_new_y))
+                    segments1_new.append(segments2_new)
+                geometry_new = QgsGeometry.fromPolygonXY(segments1_new)
+
+            if type == "multipolygon":
+                segments1_new = []
+                coor = feature.geometry().asMultiPolygon()
+                for segment1 in coor:
+                    segments2_new = []
+                    for segment2 in segment1:
+                        segments3_new = []
+                        for segment3 in segment2:
+                            coor_new_x = segment3.x()*a+segment3.y()*b+c
+                            coor_new_y = segment3.x()*d+segment3.y()*e+f
+                            segments3_new.append(QgsPointXY(coor_new_x,coor_new_y))
+                        segments2_new.append(segments3_new)
+                    segments1_new.append(segments2_new)
+                geometry_new = QgsGeometry.fromMultiPolygonXY(segments1_new)
+
             feature_new = QgsFeature()
-            feature_new.setGeometry(coor_new_qg)
+            feature_new.setGeometry(geometry_new)
             feature_new.setAttributes(feature.attributes())
             pr.addFeatures([feature_new])
             layer_new.updateExtents()
 
+        # creating file with new layer
         if(format == 'GPKG'):
-           QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + layer_name + '_transformed',"")
+            error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + layer_name + '_transformed',"")
         if(format == 'shp'):
-           QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + layer_name + '_transformed',"UTF-8",driverName="ESRI Shapefile")
+            error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + layer_name + '_transformed',"UTF-8",driverName="ESRI Shapefile")
+
+        if error[0] == QgsVectorFileWriter.NoError:
+            print("File created")
