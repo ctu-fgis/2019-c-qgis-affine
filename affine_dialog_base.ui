@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>636</width>
-    <height>488</height>
+    <width>814</width>
+    <height>487</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,9 +16,9 @@
   <widget class="QWidget" name="horizontalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>140</y>
-     <width>481</width>
+     <x>10</x>
+     <y>110</y>
+     <width>431</width>
      <height>31</height>
     </rect>
    </property>
@@ -84,9 +84,9 @@
   <widget class="QWidget" name="horizontalLayoutWidget_2">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>100</y>
-     <width>511</width>
+     <x>10</x>
+     <y>70</y>
+     <width>461</width>
      <height>31</height>
     </rect>
    </property>
@@ -126,9 +126,9 @@
   <widget class="QWidget" name="horizontalLayoutWidget_3">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>240</y>
-     <width>481</width>
+     <x>10</x>
+     <y>200</y>
+     <width>431</width>
      <height>31</height>
     </rect>
    </property>
@@ -194,13 +194,23 @@
   <widget class="QWidget" name="horizontalLayoutWidget_4">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>200</y>
-     <width>511</width>
+     <x>10</x>
+     <y>160</y>
+     <width>461</width>
      <height>31</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_4">
+    <item>
+     <widget class="QLabel" name="e1">
+      <property name="text">
+       <string>e</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
     <item>
      <widget class="QLabel" name="d1">
       <property name="text">
@@ -211,16 +221,6 @@
       </property>
       <property name="wordWrap">
        <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="e1">
-      <property name="text">
-       <string>e</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
       </property>
      </widget>
     </item>
@@ -239,8 +239,8 @@
   <widget class="QComboBox" name="Slayer_Cbox">
    <property name="geometry">
     <rect>
-     <x>110</x>
-     <y>30</y>
+     <x>90</x>
+     <y>20</y>
      <width>200</width>
      <height>20</height>
     </rect>
@@ -249,8 +249,8 @@
   <widget class="QLabel" name="Slayer1">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>30</y>
+     <x>20</x>
+     <y>20</y>
      <width>81</width>
      <height>21</height>
     </rect>
@@ -262,8 +262,8 @@
   <widget class="QPushButton" name="Transform1_Push">
    <property name="geometry">
     <rect>
-     <x>410</x>
-     <y>410</y>
+     <x>680</x>
+     <y>420</y>
      <width>111</width>
      <height>51</height>
     </rect>
@@ -275,7 +275,7 @@
   <widget class="QWidget" name="horizontalLayoutWidget_5">
    <property name="geometry">
     <rect>
-     <x>40</x>
+     <x>10</x>
      <y>370</y>
      <width>481</width>
      <height>31</height>
@@ -336,7 +336,7 @@
   <widget class="QWidget" name="horizontalLayoutWidget_6">
    <property name="geometry">
     <rect>
-     <x>40</x>
+     <x>10</x>
      <y>320</y>
      <width>261</width>
      <height>31</height>
@@ -374,7 +374,7 @@
   <widget class="QWidget" name="horizontalLayoutWidget_7">
    <property name="geometry">
     <rect>
-     <x>40</x>
+     <x>10</x>
      <y>420</y>
      <width>231</width>
      <height>31</height>
@@ -418,6 +418,91 @@
      </widget>
     </item>
    </layout>
+  </widget>
+  <widget class="Line" name="line">
+   <property name="geometry">
+    <rect>
+     <x>500</x>
+     <y>0</y>
+     <width>20</width>
+     <height>491</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Vertical</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>520</x>
+     <y>10</y>
+     <width>171</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Count parameters from layers:</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>560</x>
+     <y>50</y>
+     <width>71</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Source layer</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>700</x>
+     <y>50</y>
+     <width>71</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Target layer</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="Source_Cbox">
+   <property name="geometry">
+    <rect>
+     <x>530</x>
+     <y>80</y>
+     <width>111</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="Target_Cbox">
+   <property name="geometry">
+    <rect>
+     <x>680</x>
+     <y>80</y>
+     <width>111</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="GetP_Count">
+   <property name="geometry">
+    <rect>
+     <x>610</x>
+     <y>120</y>
+     <width>101</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Get parameters</string>
+   </property>
   </widget>
  </widget>
  <resources/>

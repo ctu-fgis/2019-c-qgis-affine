@@ -34,6 +34,7 @@ from .resources import *
 from .affine_dialog import AffineDialog
 import os.path
 import ogr
+import numpy
 
 class Affine:
     """QGIS Plugin Implementation."""
@@ -199,6 +200,8 @@ class Affine:
 
         # Clear widgets 
         self.dlg.Slayer_Cbox.clear()
+        self.dlg.Source_Cbox.clear()
+        self.dlg.Target_Cbox.clear()
         self.dlg.format_Cbox.clear()
         self.dlg.a_Ledit.clear()
         self.dlg.b_Ledit.clear()
@@ -224,10 +227,13 @@ class Affine:
         for layer in QgsProject.instance().mapLayers().values():
             if layer.type() == QgsMapLayer.VectorLayer:
                 self.dlg.Slayer_Cbox.addItem(layer.name())
+                self.dlg.Source_Cbox.addItem(layer.name())
+                self.dlg.Target_Cbox.addItem(layer.name())
             else:
                 continue
 
         self.dlg.Transform1_Push.clicked.connect(self.transform)
+        self.dlg.GetP_Count.clicked.connect(self.get_params_count)
         self.dlg.out_TButton.clicked.connect(self.select_output_directory)
 
         # Load output formats
@@ -242,6 +248,59 @@ class Affine:
             self.dlg, "Select directory ", os.path.expanduser("~")
         )
         self.dlg.out_Ledit.setText(self.dirname)
+
+    def get_params_count(self):
+        """Gets parameters counted from source and target layers"""
+
+        s_p = []
+        t_p = []
+        s_ip = 0
+        t_ip = 0
+        source_layer_name = self.dlg.Source_Cbox.currentText()
+        source_layer = QgsProject.instance().mapLayersByName(source_layer_name)[0]
+        target_layer_name = self.dlg.Target_Cbox.currentText()
+        target_layer = QgsProject.instance().mapLayersByName(target_layer_name)[0]
+
+        for target_feature in target_layer.getFeatures():
+            t_p.append(target_feature.geometry().asPoint())
+            t_ip += 1
+            for source_feature in source_layer.getFeatures():
+                if target_feature.id()== source_feature.id():
+                    s_p.append(source_feature.geometry().asPoint())
+                    s_ip += 1
+            if t_ip != s_ip:
+                t_p.pop(t_ip-1)
+                t_ip -= 1
+
+        if t_ip >= 3:
+            if t_ip > 3:
+                self.iface.messageBar().pushMessage("There are more than 3 identic poins. Transformation parameters were counted from 3 points in features with the lowest ids,which are part of both layers.", level=Qgis.Warning, duration=9)
+
+            ## /direct count\
+            params = []
+            params.append(((-t_p[1].x()+t_p[0].x())*(s_p[2].y()-s_p[1].y())+(t_p[2].x()-t_p[1].x())*(s_p[1].y()-s_p[0].y()))/((-s_p[1].x()+s_p[0].x())*(s_p[2].y()-s_p[1].y())+(s_p[2].x()-s_p[1].x())*(s_p[1].y()-s_p[0].y())))
+            params.append(((-t_p[1].x()+t_p[0].x())*(s_p[2].x()-s_p[1].x())+(t_p[2].x()-t_p[1].x())*(s_p[1].x()-s_p[0].x()))/((-s_p[1].y()+s_p[0].y())*(s_p[2].x()-s_p[1].x())+(s_p[2].y()-s_p[1].y())*(s_p[1].x()-s_p[0].x())))
+            params.append(((-t_p[1].x()*s_p[0].y()+t_p[0].x()*s_p[1].y())*(s_p[2].x()*s_p[1].y()-s_p[1].x()*s_p[2].y())+(t_p[2].x()*s_p[1].y()-t_p[1].x()*s_p[2].y())*(s_p[1].x()*s_p[0].y()-s_p[0].x()*s_p[1].y()))/((-s_p[0].y()+s_p[1].y())*(s_p[2].x()*s_p[1].y()-s_p[1].x()*s_p[2].y())+(s_p[1].y()-s_p[2].y())*(s_p[1].x()*s_p[0].y()-s_p[0].x()*s_p[1].y())))
+            params.append(((-t_p[1].y()+t_p[0].y())*(s_p[2].y()-s_p[1].y())+(t_p[2].y()-t_p[1].y())*(s_p[1].y()-s_p[0].y()))/((-s_p[1].x()+s_p[0].x())*(s_p[2].y()-s_p[1].y())+(s_p[2].x()-s_p[1].x())*(s_p[1].y()-s_p[0].y())))
+            params.append(((-t_p[1].y()+t_p[0].y())*(s_p[2].x()-s_p[1].x())+(t_p[2].y()-t_p[1].y())*(s_p[1].x()-s_p[0].x()))/((-s_p[1].y()+s_p[0].y())*(s_p[2].x()-s_p[1].x())+(s_p[2].y()-s_p[1].y())*(s_p[1].x()-s_p[0].x())))
+            params.append(((-t_p[1].y()*s_p[0].y()+t_p[0].y()*s_p[1].y())*(s_p[2].x()*s_p[1].y()-s_p[1].x()*s_p[2].y())+(t_p[2].y()*s_p[1].y()-t_p[1].y()*s_p[2].y())*(s_p[1].x()*s_p[0].y()-s_p[0].x()*s_p[1].y()))/((-s_p[0].y()+s_p[1].y())*(s_p[2].x()*s_p[1].y()-s_p[1].x()*s_p[2].y())+(s_p[1].y()-s_p[2].y())*(s_p[1].x()*s_p[0].y()-s_p[0].x()*s_p[1].y())))
+
+            ## It is possible to use these matrices instead of /direct count\
+            #X_tr = numpy.matrix([[t_p[0].x()],[t_p[0].y()],[t_p[1].x()],[t_p[1].y()],[t_p[2].x()],[t_p[2].y()]],dtype=float)
+            #X_or = numpy.matrix([[s_p[0].x(),s_p[0].y(),1,0,0,0],[0,0,0,s_p[0].x(),s_p[0].y(),1],
+            #                     [s_p[1].x(),s_p[1].y(),1,0,0,0],[0,0,0,s_p[1].x(),s_p[1].y(),1],
+            #                     [s_p[2].x(),s_p[2].y(),1,0,0,0],[0,0,0,s_p[2].x(),s_p[2].y(),1]],dtype=float)
+            #params = (numpy.linalg.inv(X_or.transpose().dot(X_or)).dot(X_or.transpose())).dot(X_tr)
+
+            self.dlg.a_Ledit.setText(str(float(params[0])))
+            self.dlg.b_Ledit.setText(str(float(params[1])))
+            self.dlg.c_Ledit.setText(str(float(params[2])))
+            self.dlg.d_Ledit.setText(str(float(params[3])))
+            self.dlg.e_Ledit.setText(str(float(params[4])))
+            self.dlg.f_Ledit.setText(str(float(params[5])))
+        else:
+            self.iface.messageBar().pushMessage("There are less than 3 identic poins. Transformation isn't possible!", level=Qgis.Critical, duration=4)
+
 
     def transform(self):
         """Transforms features in selected layer"""
@@ -278,7 +337,7 @@ class Affine:
             else:
                 type = "multipolygon"
         else:
-            self.iface.messageBar().pushMessage("Unexpected type of geometry. Transformation is impossible.", level=Qgis.Critical, duration=3)
+            self.iface.messageBar().pushMessage("Unexpected type of geometry. Transformation is impossible.", level=Qgis.Critical, duration=4)
 
         layer_new = QgsVectorLayer(type + "?crs=" + crs, "temporary_layer", "memory")
         pr = layer_new.dataProvider()
@@ -370,4 +429,4 @@ class Affine:
         if error[0] == QgsVectorFileWriter.NoError:
             self.iface.messageBar().pushMessage('File created.', level=Qgis.Info, duration=3)
         else:
-            self.iface.messageBar().pushMessage('File not created!', level=Qgis.Critical, duration=3)
+            self.iface.messageBar().pushMessage('File not created!', level=Qgis.Critical, duration=4)
