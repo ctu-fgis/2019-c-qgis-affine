@@ -35,6 +35,7 @@ from .affine_dialog import AffineDialog
 import os.path
 import ogr
 import numpy
+import math
 
 class Affine:
     """QGIS Plugin Implementation."""
@@ -202,6 +203,8 @@ class Affine:
         self.dlg.Slayer_Cbox.clear()
         self.dlg.Source_Cbox.clear()
         self.dlg.Target_Cbox.clear()
+        self.dlg.Sc_Cbox.clear()
+        self.dlg.Rot_Cbox.clear()
         self.dlg.format_Cbox.clear()
         self.dlg.a_Ledit.clear()
         self.dlg.b_Ledit.clear()
@@ -210,6 +213,10 @@ class Affine:
         self.dlg.e_Ledit.clear()
         self.dlg.f_Ledit.clear()
         self.dlg.out_Ledit.clear()
+        self.dlg.Tr_x_Ledit.clear()
+        self.dlg.Tr_y_Ledit.clear()
+        self.dlg.Sc_x_Ledit.clear()
+        self.dlg.Sc_y_Ledit.clear()
 
         self.dlg.Name_Ledit.setText('New_transformed_layer')
 
@@ -229,11 +236,19 @@ class Affine:
                 self.dlg.Slayer_Cbox.addItem(layer.name())
                 self.dlg.Source_Cbox.addItem(layer.name())
                 self.dlg.Target_Cbox.addItem(layer.name())
+                self.dlg.Rot_Cbox.addItem(layer.name())
+                self.dlg.Sc_Cbox.addItem(layer.name())
             else:
                 continue
+        
+        self.dlg.Rot_Cbox.addItem('Origin of coor. sys.')
+        self.dlg.Sc_Cbox.addItem('Origin of coor. sys.')
 
         self.dlg.Transform1_Push.clicked.connect(self.transform)
         self.dlg.GetP_Count.clicked.connect(self.get_params_count)
+        self.dlg.GetP_Translation.clicked.connect(self.get_params_translation)
+        self.dlg.GetP_Scaling.clicked.connect(self.get_params_scaling)
+        self.dlg.GetP_Rotation.clicked.connect(self.get_params_rotation)
         self.dlg.out_TButton.clicked.connect(self.select_output_directory)
 
         # Load output formats
@@ -301,6 +316,56 @@ class Affine:
         else:
             self.iface.messageBar().pushMessage("There are less than 3 identic poins. Transformation isn't possible!", level=Qgis.Critical, duration=4)
 
+    def get_params_rotation(self):
+        """Gets parameters for rotation"""
+        angle = float(self.dlg.Rot_ang_Ledit.text())/180*math.pi
+        centre_lay_name = self.dlg.Rot_Cbox.currentText()
+        if centre_lay_name == 'Origin of coor. sys.':
+            centre_x = 0
+            centre_y = 0
+        else:
+            centre_lay = QgsProject.instance().mapLayersByName(centre_lay_name)[0]
+            centre_x = (centre_lay.extent().xMaximum() + centre_lay.extent().xMinimum())/2
+            centre_y = (centre_lay.extent().yMaximum() + centre_lay.extent().yMinimum())/2
+
+        self.dlg.a_Ledit.setText(str(math.cos(angle)))
+        self.dlg.b_Ledit.setText(str(-math.sin(angle)))
+        self.dlg.c_Ledit.setText(str(-centre_x*math.cos(angle)+centre_y*math.sin(angle)+centre_x))
+        self.dlg.d_Ledit.setText(str(math.sin(angle)))
+        self.dlg.e_Ledit.setText(str(math.cos(angle)))
+        self.dlg.f_Ledit.setText(str(-centre_x*math.sin(angle)-centre_y*math.cos(angle)+centre_y))
+
+    def get_params_translation(self):
+        """Gets parameters for translation"""
+        trans_x = float(self.dlg.Tr_x_Ledit.text())
+        trans_y = float(self.dlg.Tr_y_Ledit.text())
+
+        self.dlg.a_Ledit.setText(str(1))
+        self.dlg.b_Ledit.setText(str(0))
+        self.dlg.c_Ledit.setText(str(trans_x))
+        self.dlg.d_Ledit.setText(str(0))
+        self.dlg.e_Ledit.setText(str(1))
+        self.dlg.f_Ledit.setText(str(trans_y))
+
+    def get_params_scaling(self):
+        """Gets parameters for scaling"""
+        scale_x = float(self.dlg.Sc_x_Ledit.text())
+        scale_y = float(self.dlg.Sc_y_Ledit.text())
+        centre_lay_name = self.dlg.Sc_Cbox.currentText()
+        if centre_lay_name == 'Origin of coor. sys.':
+            centre_x = 0
+            centre_y = 0
+        else:
+            centre_lay = QgsProject.instance().mapLayersByName(centre_lay_name)[0]
+            centre_x = (centre_lay.extent().xMaximum() + centre_lay.extent().xMinimum())/2
+            centre_y = (centre_lay.extent().yMaximum() + centre_lay.extent().yMinimum())/2
+
+        self.dlg.a_Ledit.setText(str(scale_x))
+        self.dlg.b_Ledit.setText(str(0))
+        self.dlg.c_Ledit.setText(str((1-scale_x)*centre_x))
+        self.dlg.d_Ledit.setText(str(0))
+        self.dlg.e_Ledit.setText(str(scale_y))
+        self.dlg.f_Ledit.setText(str((1-scale_y)*centre_y))
 
     def transform(self):
         """Transforms features in selected layer"""
