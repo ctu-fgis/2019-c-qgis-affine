@@ -219,6 +219,8 @@ class Affine:
         self.dlg.Sc_y_Ledit.clear()
 
         self.dlg.Name_Ledit.setText('New_transformed_layer')
+        self.dlg.Memory_Rb.setChecked(True)
+        self.dlg.Add_CheckB.setChecked(True)
 
         #       DELETE     !!!!   #{ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         self.dlg.a_Ledit.setText('1')
@@ -404,7 +406,7 @@ class Affine:
         else:
             self.iface.messageBar().pushMessage("Unexpected type of geometry. Transformation is impossible.", level=Qgis.Critical, duration=4)
 
-        layer_new = QgsVectorLayer(type + "?crs=" + crs, "temporary_layer", "memory")
+        layer_new = QgsVectorLayer(type + "?crs=" + crs, name, "memory")
         pr = layer_new.dataProvider()
         pr.addAttributes(layer.fields())
         layer_new.updateFields()
@@ -481,17 +483,26 @@ class Affine:
             pr.addFeatures([feature_new])
             layer_new.updateExtents()
 
-        # creating file with new layer
-        if(format == 'GPKG'):
-            error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"")
-        if(format == 'shp'):
-            error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="ESRI Shapefile")
-        if(format == 'GeoJSON'):
-            error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="GeoJSON")
-        if(format == 'kml'):
-            error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="KML")
+        if self.dlg.Memory_Rb.isChecked():
+            self.iface.messageBar().pushMessage('Memory layer created.', level=Qgis.Success, duration=3)
+            if self.dlg.Add_CheckB.isChecked():
+                QgsProject.instance().addMapLayer(layer_new)
 
-        if error[0] == QgsVectorFileWriter.NoError:
-            self.iface.messageBar().pushMessage('File created.', level=Qgis.Info, duration=3)
-        else:
-            self.iface.messageBar().pushMessage('File not created!', level=Qgis.Critical, duration=4)
+        # creating file with new layer
+        if self.dlg.File_Rb.isChecked():
+            if(format == 'GPKG'):
+                error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"")
+            if(format == 'shp'):
+                error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="ESRI Shapefile")
+            if(format == 'GeoJSON'):
+                error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="GeoJSON")
+            if(format == 'kml'):
+                error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="KML")
+            
+            if error[0] == QgsVectorFileWriter.NoError:
+                self.iface.messageBar().pushMessage('File created.', level=Qgis.Success, duration=3)
+            else:
+                self.iface.messageBar().pushMessage('File not created!', level=Qgis.Critical, duration=4)
+            
+            if self.dlg.Add_CheckB.isChecked():
+                QgsProject.instance().addMapLayer(QgsVectorLayer(path = out + '/' + name + '.' + format,baseName = name))
