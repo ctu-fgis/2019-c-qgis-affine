@@ -221,16 +221,14 @@ class Affine:
         self.dlg.Name_Ledit.setText('New_transformed_layer')
         self.dlg.Memory_Rb.setChecked(True)
         self.dlg.Add_CheckB.setChecked(True)
-
-        #       DELETE     !!!!   #{ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        self.dlg.a_Ledit.setText('1')
-        self.dlg.b_Ledit.setText('0')
-        self.dlg.c_Ledit.setText('200000')
-        self.dlg.d_Ledit.setText('0')
-        self.dlg.e_Ledit.setText('1')
-        self.dlg.f_Ledit.setText('1')
-        self.dlg.out_Ledit.setText('D:/Dokumenty/škola/2018-19/2. semestr/Free software GIS/QGIS_Plugins/affine_out')
-        #       DELETE     !!!!   #}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        self.dlg.Overwrite_CheckB.setChecked(True)
+        self.dlg.Selected_CheckB.setChecked(False)
+        self.dlg.out_Ledit.setEnabled(False)
+        self.dlg.out_Label.setEnabled(False)
+        self.dlg.format_Label.setEnabled(False)
+        self.dlg.format_Cbox.setEnabled(False)
+        self.dlg.out_TButton.setEnabled(False)
+        self.dlg.Overwrite_CheckB.setEnabled(False)
 
         # Load vector layers
         for layer in QgsProject.instance().mapLayers().values():
@@ -252,12 +250,39 @@ class Affine:
         self.dlg.GetP_Scaling.clicked.connect(self.get_params_scaling)
         self.dlg.GetP_Rotation.clicked.connect(self.get_params_rotation)
         self.dlg.out_TButton.clicked.connect(self.select_output_directory)
+        self.dlg.Memory_Rb.toggled.connect(self.disable_output)
+        self.dlg.Selected_CheckB.toggled.connect(self.disable_whole_layer)
 
         # Load output formats
         self.dlg.format_Cbox.addItem('GPKG')
         self.dlg.format_Cbox.addItem('shp')
         self.dlg.format_Cbox.addItem('GeoJSON')
         self.dlg.format_Cbox.addItem('kml')
+
+    def disable_output(self):
+        """Disables widgets for output file if 'only memory layer' is checked"""
+        if self.dlg.Memory_Rb.isChecked():
+            self.dlg.out_Ledit.setEnabled(False)
+            self.dlg.out_Label.setEnabled(False)
+            self.dlg.format_Label.setEnabled(False)
+            self.dlg.format_Cbox.setEnabled(False)
+            self.dlg.out_TButton.setEnabled(False)
+            self.dlg.Overwrite_CheckB.setEnabled(False)
+        else:
+            self.dlg.out_Ledit.setEnabled(True)
+            self.dlg.out_Label.setEnabled(True)
+            self.dlg.format_Label.setEnabled(True)
+            self.dlg.format_Cbox.setEnabled(True)
+            self.dlg.out_TButton.setEnabled(True)
+            self.dlg.Overwrite_CheckB.setEnabled(True)
+
+    def disable_whole_layer(self):
+        if self.dlg.Selected_CheckB.isChecked():
+            self.dlg.Slayer1.setEnabled(False)
+            self.dlg.Slayer_Cbox.setEnabled(False)
+        else:
+            self.dlg.Slayer1.setEnabled(True)
+            self.dlg.Slayer_Cbox.setEnabled(True)
 
     def select_output_directory(self):
         """Lets user to choose output directory"""
@@ -267,56 +292,61 @@ class Affine:
         self.dlg.out_Ledit.setText(self.dirname)
 
     def get_params_count(self):
-        """Gets parameters counted from source and target layers"""
+        """Gets parameters counted from source and target single point layers"""
 
-        s_p = []
-        t_p = []
-        s_ip = 0
-        t_ip = 0
         source_layer_name = self.dlg.Source_Cbox.currentText()
         source_layer = QgsProject.instance().mapLayersByName(source_layer_name)[0]
         target_layer_name = self.dlg.Target_Cbox.currentText()
         target_layer = QgsProject.instance().mapLayersByName(target_layer_name)[0]
+        s_type = source_layer.geometryType()
+        s_wkbtype = source_layer.wkbType()
+        t_type = target_layer.geometryType()
+        t_wkbtype = target_layer.wkbType()
+        if (s_type==QgsWkbTypes.PointGeometry) and (t_type==QgsWkbTypes.PointGeometry) and (QgsWkbTypes.isSingleType(s_wkbtype)) and (QgsWkbTypes.isSingleType(t_wkbtype)):
+            s_p = []
+            t_p = []
+            s_ip = 0
+            t_ip = 0
+            for target_feature in target_layer.getFeatures():
+                t_p.append(target_feature.geometry().asPoint())
+                t_ip += 1
+                for source_feature in source_layer.getFeatures():
+                    if target_feature.id()== source_feature.id():
+                        s_p.append(source_feature.geometry().asPoint())
+                        s_ip += 1
+                if t_ip != s_ip:
+                    t_p.pop(t_ip-1)
+                    t_ip -= 1
 
-        for target_feature in target_layer.getFeatures():
-            t_p.append(target_feature.geometry().asPoint())
-            t_ip += 1
-            for source_feature in source_layer.getFeatures():
-                if target_feature.id()== source_feature.id():
-                    s_p.append(source_feature.geometry().asPoint())
-                    s_ip += 1
-            if t_ip != s_ip:
-                t_p.pop(t_ip-1)
-                t_ip -= 1
+            if t_ip >= 3:
+                if t_ip > 3:
+                    self.iface.messageBar().pushMessage("There are more than 3 identic poins. Transformation parameters were counted from 3 points in features with the lowest ids,which are part of both layers.", level=Qgis.Warning, duration=9)
+                ## /direct count\
+                params = []
+                params.append(((-t_p[1].x()+t_p[0].x())*(s_p[2].y()-s_p[1].y())+(t_p[2].x()-t_p[1].x())*(s_p[1].y()-s_p[0].y()))/((-s_p[1].x()+s_p[0].x())*(s_p[2].y()-s_p[1].y())+(s_p[2].x()-s_p[1].x())*(s_p[1].y()-s_p[0].y())))
+                params.append(((-t_p[1].x()+t_p[0].x())*(s_p[2].x()-s_p[1].x())+(t_p[2].x()-t_p[1].x())*(s_p[1].x()-s_p[0].x()))/((-s_p[1].y()+s_p[0].y())*(s_p[2].x()-s_p[1].x())+(s_p[2].y()-s_p[1].y())*(s_p[1].x()-s_p[0].x())))
+                params.append(((-t_p[1].x()*s_p[0].y()+t_p[0].x()*s_p[1].y())*(s_p[2].x()*s_p[1].y()-s_p[1].x()*s_p[2].y())+(t_p[2].x()*s_p[1].y()-t_p[1].x()*s_p[2].y())*(s_p[1].x()*s_p[0].y()-s_p[0].x()*s_p[1].y()))/((-s_p[0].y()+s_p[1].y())*(s_p[2].x()*s_p[1].y()-s_p[1].x()*s_p[2].y())+(s_p[1].y()-s_p[2].y())*(s_p[1].x()*s_p[0].y()-s_p[0].x()*s_p[1].y())))
+                params.append(((-t_p[1].y()+t_p[0].y())*(s_p[2].y()-s_p[1].y())+(t_p[2].y()-t_p[1].y())*(s_p[1].y()-s_p[0].y()))/((-s_p[1].x()+s_p[0].x())*(s_p[2].y()-s_p[1].y())+(s_p[2].x()-s_p[1].x())*(s_p[1].y()-s_p[0].y())))
+                params.append(((-t_p[1].y()+t_p[0].y())*(s_p[2].x()-s_p[1].x())+(t_p[2].y()-t_p[1].y())*(s_p[1].x()-s_p[0].x()))/((-s_p[1].y()+s_p[0].y())*(s_p[2].x()-s_p[1].x())+(s_p[2].y()-s_p[1].y())*(s_p[1].x()-s_p[0].x())))
+                params.append(((-t_p[1].y()*s_p[0].y()+t_p[0].y()*s_p[1].y())*(s_p[2].x()*s_p[1].y()-s_p[1].x()*s_p[2].y())+(t_p[2].y()*s_p[1].y()-t_p[1].y()*s_p[2].y())*(s_p[1].x()*s_p[0].y()-s_p[0].x()*s_p[1].y()))/((-s_p[0].y()+s_p[1].y())*(s_p[2].x()*s_p[1].y()-s_p[1].x()*s_p[2].y())+(s_p[1].y()-s_p[2].y())*(s_p[1].x()*s_p[0].y()-s_p[0].x()*s_p[1].y())))
 
-        if t_ip >= 3:
-            if t_ip > 3:
-                self.iface.messageBar().pushMessage("There are more than 3 identic poins. Transformation parameters were counted from 3 points in features with the lowest ids,which are part of both layers.", level=Qgis.Warning, duration=9)
+                ## It is possible to use these matrices instead of /direct count\
+                #X_tr = numpy.matrix([[t_p[0].x()],[t_p[0].y()],[t_p[1].x()],[t_p[1].y()],[t_p[2].x()],[t_p[2].y()]],dtype=float)
+                #X_or = numpy.matrix([[s_p[0].x(),s_p[0].y(),1,0,0,0],[0,0,0,s_p[0].x(),s_p[0].y(),1],
+                #                     [s_p[1].x(),s_p[1].y(),1,0,0,0],[0,0,0,s_p[1].x(),s_p[1].y(),1],
+                #                     [s_p[2].x(),s_p[2].y(),1,0,0,0],[0,0,0,s_p[2].x(),s_p[2].y(),1]],dtype=float)
+                #params = (numpy.linalg.inv(X_or.transpose().dot(X_or)).dot(X_or.transpose())).dot(X_tr)
 
-            ## /direct count\
-            params = []
-            params.append(((-t_p[1].x()+t_p[0].x())*(s_p[2].y()-s_p[1].y())+(t_p[2].x()-t_p[1].x())*(s_p[1].y()-s_p[0].y()))/((-s_p[1].x()+s_p[0].x())*(s_p[2].y()-s_p[1].y())+(s_p[2].x()-s_p[1].x())*(s_p[1].y()-s_p[0].y())))
-            params.append(((-t_p[1].x()+t_p[0].x())*(s_p[2].x()-s_p[1].x())+(t_p[2].x()-t_p[1].x())*(s_p[1].x()-s_p[0].x()))/((-s_p[1].y()+s_p[0].y())*(s_p[2].x()-s_p[1].x())+(s_p[2].y()-s_p[1].y())*(s_p[1].x()-s_p[0].x())))
-            params.append(((-t_p[1].x()*s_p[0].y()+t_p[0].x()*s_p[1].y())*(s_p[2].x()*s_p[1].y()-s_p[1].x()*s_p[2].y())+(t_p[2].x()*s_p[1].y()-t_p[1].x()*s_p[2].y())*(s_p[1].x()*s_p[0].y()-s_p[0].x()*s_p[1].y()))/((-s_p[0].y()+s_p[1].y())*(s_p[2].x()*s_p[1].y()-s_p[1].x()*s_p[2].y())+(s_p[1].y()-s_p[2].y())*(s_p[1].x()*s_p[0].y()-s_p[0].x()*s_p[1].y())))
-            params.append(((-t_p[1].y()+t_p[0].y())*(s_p[2].y()-s_p[1].y())+(t_p[2].y()-t_p[1].y())*(s_p[1].y()-s_p[0].y()))/((-s_p[1].x()+s_p[0].x())*(s_p[2].y()-s_p[1].y())+(s_p[2].x()-s_p[1].x())*(s_p[1].y()-s_p[0].y())))
-            params.append(((-t_p[1].y()+t_p[0].y())*(s_p[2].x()-s_p[1].x())+(t_p[2].y()-t_p[1].y())*(s_p[1].x()-s_p[0].x()))/((-s_p[1].y()+s_p[0].y())*(s_p[2].x()-s_p[1].x())+(s_p[2].y()-s_p[1].y())*(s_p[1].x()-s_p[0].x())))
-            params.append(((-t_p[1].y()*s_p[0].y()+t_p[0].y()*s_p[1].y())*(s_p[2].x()*s_p[1].y()-s_p[1].x()*s_p[2].y())+(t_p[2].y()*s_p[1].y()-t_p[1].y()*s_p[2].y())*(s_p[1].x()*s_p[0].y()-s_p[0].x()*s_p[1].y()))/((-s_p[0].y()+s_p[1].y())*(s_p[2].x()*s_p[1].y()-s_p[1].x()*s_p[2].y())+(s_p[1].y()-s_p[2].y())*(s_p[1].x()*s_p[0].y()-s_p[0].x()*s_p[1].y())))
-
-            ## It is possible to use these matrices instead of /direct count\
-            #X_tr = numpy.matrix([[t_p[0].x()],[t_p[0].y()],[t_p[1].x()],[t_p[1].y()],[t_p[2].x()],[t_p[2].y()]],dtype=float)
-            #X_or = numpy.matrix([[s_p[0].x(),s_p[0].y(),1,0,0,0],[0,0,0,s_p[0].x(),s_p[0].y(),1],
-            #                     [s_p[1].x(),s_p[1].y(),1,0,0,0],[0,0,0,s_p[1].x(),s_p[1].y(),1],
-            #                     [s_p[2].x(),s_p[2].y(),1,0,0,0],[0,0,0,s_p[2].x(),s_p[2].y(),1]],dtype=float)
-            #params = (numpy.linalg.inv(X_or.transpose().dot(X_or)).dot(X_or.transpose())).dot(X_tr)
-
-            self.dlg.a_Ledit.setText(str(float(params[0])))
-            self.dlg.b_Ledit.setText(str(float(params[1])))
-            self.dlg.c_Ledit.setText(str(float(params[2])))
-            self.dlg.d_Ledit.setText(str(float(params[3])))
-            self.dlg.e_Ledit.setText(str(float(params[4])))
-            self.dlg.f_Ledit.setText(str(float(params[5])))
+                self.dlg.a_Ledit.setText(str(float(params[0])))
+                self.dlg.b_Ledit.setText(str(float(params[1])))
+                self.dlg.c_Ledit.setText(str(float(params[2])))
+                self.dlg.d_Ledit.setText(str(float(params[3])))
+                self.dlg.e_Ledit.setText(str(float(params[4])))
+                self.dlg.f_Ledit.setText(str(float(params[5])))
+            else:
+                self.iface.messageBar().pushMessage("There are less than 3 identic poins. Transformation isn't possible!", level=Qgis.Critical, duration=4)
         else:
-            self.iface.messageBar().pushMessage("There are less than 3 identic poins. Transformation isn't possible!", level=Qgis.Critical, duration=4)
+            self.iface.messageBar().pushMessage("Layers for counting parameters have to be single point layers!", level=Qgis.Critical, duration=5)
 
     def get_params_rotation(self):
         """Gets parameters for rotation"""
@@ -372,137 +402,185 @@ class Affine:
     def transform(self):
         """Transforms features in selected layer"""
 
-        a = float(self.dlg.a_Ledit.text())
-        b = float(self.dlg.b_Ledit.text())
-        c = float(self.dlg.c_Ledit.text())
-        d = float(self.dlg.d_Ledit.text())
-        e = float(self.dlg.e_Ledit.text())
-        f = float(self.dlg.f_Ledit.text())
-        name = self.dlg.Name_Ledit.text()
-        out = self.dlg.out_Ledit.text()
-        format = self.dlg.format_Cbox.currentText()
-
         layer_name = self.dlg.Slayer_Cbox.currentText()
         layer = QgsProject.instance().mapLayersByName(layer_name)[0]
         crs = layer.crs().authid()
+        layer_features = layer.getFeatures()
+        if self.dlg.Selected_CheckB.isChecked():
+            layer = self.iface.activeLayer()
+            crs = self.iface.activeLayer().crs().authid()
+            layer_features = layer.selectedFeatures()
+        out = self.dlg.out_Ledit.text()
+        name = self.dlg.Name_Ledit.text()
+        format = self.dlg.format_Cbox.currentText()
 
-        # creating new layer
-        feature_geom = layer.getFeature(1).geometry()
-        if feature_geom.type() == QgsWkbTypes.PointGeometry:
-            if QgsWkbTypes.isSingleType(feature_geom.wkbType()):
+
+        if layer.geometryType() == QgsWkbTypes.PointGeometry:
+            if QgsWkbTypes.isSingleType(layer.wkbType()):
                 type = "point"
             else:
                 type = "multipoint"
-        elif feature_geom.type() == QgsWkbTypes.LineGeometry:
-            if QgsWkbTypes.isSingleType(feature_geom.wkbType()):
+        elif layer.geometryType() == QgsWkbTypes.LineGeometry:
+            if QgsWkbTypes.isSingleType(layer.wkbType()):
                 type = "linestring"
             else:
                 type = "multilinestring"
-        elif feature_geom.type() == QgsWkbTypes.PolygonGeometry:
-            if QgsWkbTypes.isSingleType(feature_geom.wkbType()):
+        elif layer.geometryType() == QgsWkbTypes.PolygonGeometry:
+            if QgsWkbTypes.isSingleType(layer.wkbType()):
                 type = "polygon"
             else:
                 type = "multipolygon"
         else:
+            type = "unknown"
+
+        if type == "unknown":
             self.iface.messageBar().pushMessage("Unexpected type of geometry. Transformation is impossible.", level=Qgis.Critical, duration=4)
+        elif (self.dlg.File_Rb.isChecked()) and (self.dlg.Overwrite_CheckB.isChecked()==False) and os.path.exists(out + '/' + name + '.'+format):
+            self.iface.messageBar().pushMessage('Layer with given name already exists in output directory!', level=Qgis.Critical, duration=4)
+        else:
+            a = float(self.dlg.a_Ledit.text())
+            b = float(self.dlg.b_Ledit.text())
+            c = float(self.dlg.c_Ledit.text())
+            d = float(self.dlg.d_Ledit.text())
+            e = float(self.dlg.e_Ledit.text())
+            f = float(self.dlg.f_Ledit.text())
 
-        layer_new = QgsVectorLayer(type + "?crs=" + crs, name, "memory")
-        pr = layer_new.dataProvider()
-        pr.addAttributes(layer.fields())
-        layer_new.updateFields()
-
-        # adding new features into new layer
-        for feature in layer.getFeatures():
+            # creating layer
+            layer_new = QgsVectorLayer(type + "?crs=" + crs, name, "memory")
+            pr = layer_new.dataProvider()
+            pr.addAttributes(layer.fields())
+            layer_new.updateFields()
+            
+            # adding new features into new layer
+            
             # Point layer
             if type == "point":
-                coor = feature.geometry().asPoint()
-                coor_new_x = coor.x()*a+coor.y()*b+c
-                coor_new_y = coor.x()*d+coor.y()*e+f
-                geometry_new = QgsGeometry.fromPointXY(QgsPointXY(coor_new_x,coor_new_y))
+                for feature in layer_features:
+                    coor = feature.geometry().asPoint()
+                    coor_new_x = coor.x()*a+coor.y()*b+c
+                    coor_new_y = coor.x()*d+coor.y()*e+f
+                    geometry_new = QgsGeometry.fromPointXY(QgsPointXY(coor_new_x,coor_new_y))
+                    
+                    feature_new = QgsFeature()
+                    feature_new.setGeometry(geometry_new)
+                    feature_new.setAttributes(feature.attributes())
+                    pr.addFeatures([feature_new])
+                    layer_new.updateExtents()
+            
             if type == "multipoint":
-                segments_new =[]
-                coor = feature.geometry().asMultiPoint()
-                for segment in coor:
-                    coor_new_x = segment.x()*a+segment.y()*b+c
-                    coor_new_y = segment.x()*d+segment.y()*e+f
-                    segments_new.append(QgsPointXY(coor_new_x,coor_new_y))
-                geometry_new = QgsGeometry.fromMultiPointXY(segments_new)
-
+                for feature in layer_features:
+                    segments_new =[]
+                    coor = feature.geometry().asMultiPoint()
+                    for segment in coor:
+                        coor_new_x = segment.x()*a+segment.y()*b+c
+                        coor_new_y = segment.x()*d+segment.y()*e+f
+                        segments_new.append(QgsPointXY(coor_new_x,coor_new_y))
+                    geometry_new = QgsGeometry.fromMultiPointXY(segments_new)
+                    
+                    feature_new = QgsFeature()
+                    feature_new.setGeometry(geometry_new)
+                    feature_new.setAttributes(feature.attributes())
+                    pr.addFeatures([feature_new])
+                    layer_new.updateExtents()
+            
             # Polyline layer
             if type == "linestring":
-                segments_new =[]
-                coor = feature.geometry().asPolyline()
-                for segment in coor:
-                    coor_new_x = segment.x()*a+segment.y()*b+c
-                    coor_new_y = segment.x()*d+segment.y()*e+f
-                    segments_new.append(QgsPointXY(coor_new_x,coor_new_y))
-                geometry_new = QgsGeometry.fromPolylineXY(segments_new)
+                for feature in layer_features:
+                    segments_new =[]
+                    coor = feature.geometry().asPolyline()
+                    for segment in coor:
+                        coor_new_x = segment.x()*a+segment.y()*b+c
+                        coor_new_y = segment.x()*d+segment.y()*e+f
+                        segments_new.append(QgsPointXY(coor_new_x,coor_new_y))
+                    geometry_new = QgsGeometry.fromPolylineXY(segments_new)
+                    
+                    feature_new = QgsFeature()
+                    feature_new.setGeometry(geometry_new)
+                    feature_new.setAttributes(feature.attributes())
+                    pr.addFeatures([feature_new])
+                    layer_new.updateExtents()
+            
             if type == "multilinestring":
-                segments1_new = []
-                coor = feature.geometry().asMultiPolyline()
-                for segment1 in coor:
-                    segments2_new = []
-                    for segment2 in segment1:
-                        coor_new_x = segment2.x()*a+segment2.y()*b+c
-                        coor_new_y = segment2.x()*d+segment2.y()*e+f
-                        segments2_new.append(QgsPointXY(coor_new_x,coor_new_y))
-                    segments1_new.append(segments2_new)
-                geometry_new = QgsGeometry.fromMultiPolylineXY(segments1_new)
-
+                for feature in layer_features:
+                    segments1_new = []
+                    coor = feature.geometry().asMultiPolyline()
+                    for segment1 in coor:
+                        segments2_new = []
+                        for segment2 in segment1:
+                            coor_new_x = segment2.x()*a+segment2.y()*b+c
+                            coor_new_y = segment2.x()*d+segment2.y()*e+f
+                            segments2_new.append(QgsPointXY(coor_new_x,coor_new_y))
+                        segments1_new.append(segments2_new)
+                    geometry_new = QgsGeometry.fromMultiPolylineXY(segments1_new)
+                    
+                    feature_new = QgsFeature()
+                    feature_new.setGeometry(geometry_new)
+                    feature_new.setAttributes(feature.attributes())
+                    pr.addFeatures([feature_new])
+                    layer_new.updateExtents()
+            
             # Polygon layer
             if type == "polygon":
-                segments1_new = []
-                coor = feature.geometry().asPolygon()
-                for segment1 in coor:
-                    segments2_new = []
-                    for segment2 in segment1:
-                        coor_new_x = segment2.x()*a+segment2.y()*b+c
-                        coor_new_y = segment2.x()*d+segment2.y()*e+f
-                        segments2_new.append(QgsPointXY(coor_new_x,coor_new_y))
-                    segments1_new.append(segments2_new)
-                geometry_new = QgsGeometry.fromPolygonXY(segments1_new)
-
+                for feature in layer_features:
+                    segments1_new = []
+                    coor = feature.geometry().asPolygon()
+                    for segment1 in coor:
+                        segments2_new = []
+                        for segment2 in segment1:
+                            coor_new_x = segment2.x()*a+segment2.y()*b+c
+                            coor_new_y = segment2.x()*d+segment2.y()*e+f
+                            segments2_new.append(QgsPointXY(coor_new_x,coor_new_y))
+                        segments1_new.append(segments2_new)
+                    geometry_new = QgsGeometry.fromPolygonXY(segments1_new)
+                    
+                    feature_new = QgsFeature()
+                    feature_new.setGeometry(geometry_new)
+                    feature_new.setAttributes(feature.attributes())
+                    pr.addFeatures([feature_new])
+                    layer_new.updateExtents()
+            
             if type == "multipolygon":
-                segments1_new = []
-                coor = feature.geometry().asMultiPolygon()
-                for segment1 in coor:
-                    segments2_new = []
-                    for segment2 in segment1:
-                        segments3_new = []
-                        for segment3 in segment2:
-                            coor_new_x = segment3.x()*a+segment3.y()*b+c
-                            coor_new_y = segment3.x()*d+segment3.y()*e+f
-                            segments3_new.append(QgsPointXY(coor_new_x,coor_new_y))
-                        segments2_new.append(segments3_new)
-                    segments1_new.append(segments2_new)
-                geometry_new = QgsGeometry.fromMultiPolygonXY(segments1_new)
-
-            feature_new = QgsFeature()
-            feature_new.setGeometry(geometry_new)
-            feature_new.setAttributes(feature.attributes())
-            pr.addFeatures([feature_new])
-            layer_new.updateExtents()
-
-        if self.dlg.Memory_Rb.isChecked():
-            self.iface.messageBar().pushMessage('Memory layer created.', level=Qgis.Success, duration=3)
-            if self.dlg.Add_CheckB.isChecked():
-                QgsProject.instance().addMapLayer(layer_new)
-
-        # creating file with new layer
-        if self.dlg.File_Rb.isChecked():
-            if(format == 'GPKG'):
-                error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"")
-            if(format == 'shp'):
-                error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="ESRI Shapefile")
-            if(format == 'GeoJSON'):
-                error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="GeoJSON")
-            if(format == 'kml'):
-                error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="KML")
+                for feature in layer_features:
+                    segments1_new = []
+                    coor = feature.geometry().asMultiPolygon()
+                    for segment1 in coor:
+                        segments2_new = []
+                        for segment2 in segment1:
+                            segments3_new = []
+                            for segment3 in segment2:
+                                coor_new_x = segment3.x()*a+segment3.y()*b+c
+                                coor_new_y = segment3.x()*d+segment3.y()*e+f
+                                segments3_new.append(QgsPointXY(coor_new_x,coor_new_y))
+                            segments2_new.append(segments3_new)
+                        segments1_new.append(segments2_new)
+                    geometry_new = QgsGeometry.fromMultiPolygonXY(segments1_new)
+                    
+                    feature_new = QgsFeature()
+                    feature_new.setGeometry(geometry_new)
+                    feature_new.setAttributes(feature.attributes())
+                    pr.addFeatures([feature_new])
+                    layer_new.updateExtents()
             
-            if error[0] == QgsVectorFileWriter.NoError:
-                self.iface.messageBar().pushMessage('File created.', level=Qgis.Success, duration=3)
-            else:
-                self.iface.messageBar().pushMessage('File not created!', level=Qgis.Critical, duration=4)
+            if self.dlg.Memory_Rb.isChecked():
+                self.iface.messageBar().pushMessage('Memory layer created.', level=Qgis.Success, duration=3)
+                if self.dlg.Add_CheckB.isChecked():
+                    QgsProject.instance().addMapLayer(layer_new)
             
-            if self.dlg.Add_CheckB.isChecked():
-                QgsProject.instance().addMapLayer(QgsVectorLayer(path = out + '/' + name + '.' + format,baseName = name))
+            # creating file with new layer
+            if self.dlg.File_Rb.isChecked():
+                if(format == 'GPKG'):
+                    error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"")
+                if(format == 'shp'):
+                    error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="ESRI Shapefile")
+                if(format == 'GeoJSON'):
+                    error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="GeoJSON")
+                if(format == 'kml'):
+                    error = QgsVectorFileWriter.writeAsVectorFormat(layer_new, out + '/' + name,"UTF-8",driverName="KML")
+                
+                if error[0] == QgsVectorFileWriter.NoError:
+                    self.iface.messageBar().pushMessage('File created.', level=Qgis.Success, duration=3)
+                else:
+                    self.iface.messageBar().pushMessage('File not created!', level=Qgis.Critical, duration=4)
+                
+                if self.dlg.Add_CheckB.isChecked():
+                    QgsProject.instance().addMapLayer(QgsVectorLayer(path = out + '/' + name + '.' + format,baseName = name))

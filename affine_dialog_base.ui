@@ -239,8 +239,8 @@
   <widget class="QComboBox" name="Slayer_Cbox">
    <property name="geometry">
     <rect>
-     <x>90</x>
-     <y>20</y>
+     <x>80</x>
+     <y>10</y>
      <width>200</width>
      <height>20</height>
     </rect>
@@ -249,8 +249,8 @@
   <widget class="QLabel" name="Slayer1">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>20</y>
+     <x>10</x>
+     <y>10</y>
      <width>81</width>
      <height>21</height>
     </rect>
@@ -822,6 +822,32 @@
    </property>
    <property name="text">
     <string>Add layer to map canvas</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="Overwrite_CheckB">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>530</y>
+     <width>141</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Overwrite existing layer</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="Selected_CheckB">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>40</y>
+     <width>201</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Only selected features in active layer</string>
    </property>
   </widget>
  </widget>
