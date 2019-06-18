@@ -9,15 +9,15 @@
 [general]
 name=Affine transformer
 qgisMinimumVersion=3.0
-description=This plugin transforms vector layers.
+description=Plugin for affine transformation of features
 version=0.1
 author=Jan Šartner, FSV ČVUT
 email=sartnerjan@seznam.cz
 
-about=This plugin transforms vector layers/features using entred parameters or computed parameters from at least 3 points. There is also option for rotating around specified point or shifting in selected direction.
+about=Plugin can transform vector layers/features using setted parameters in transformation matrix. There are options of counting parameters for specific geometric operations (rotation, translation, scaling) or counting parameters from point layers. User can create new file(GPKG,shp,...) or only memory layer.
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/ctu-yfsg/2019-c-qgis-affine/issues
+repository=https://github.com/ctu-yfsg/2019-c-qgis-affine
 # End of mandatory metadata
 
 # Recommended items:
@@ -28,7 +28,7 @@ repository=http://repo
 # Tags are comma separated with spaces allowed
 tags=python
 
-homepage=http://homepage
+homepage=https://github.com/ctu-yfsg/2019-c-qgis-affine
 category=Plugins
 icon=icon.png
 # experimental flag

@@ -193,42 +193,61 @@ class Affine:
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
-            self.first_start = False
             self.dlg = AffineDialog()
 
         # show the dialog
         self.dlg.show()
 
-        # Clear widgets 
+        if self.first_start == True:
+            # Clear widgets
+            self.dlg.a_Ledit.clear()
+            self.dlg.b_Ledit.clear()
+            self.dlg.c_Ledit.clear()
+            self.dlg.d_Ledit.clear()
+            self.dlg.e_Ledit.clear()
+            self.dlg.f_Ledit.clear()
+            self.dlg.out_Ledit.clear()
+            self.dlg.Rot_ang_Ledit.clear()
+            self.dlg.Tr_x_Ledit.clear()
+            self.dlg.Tr_y_Ledit.clear()
+            self.dlg.Sc_x_Ledit.clear()
+            self.dlg.Sc_y_Ledit.clear()
+
+            # Default setup
+            self.dlg.Name_Ledit.setText('New_transformed_layer')
+            self.dlg.Memory_Rb.setChecked(True)
+            self.dlg.Add_CheckB.setChecked(True)
+            self.dlg.Overwrite_CheckB.setChecked(True)
+            self.dlg.Selected_CheckB.setChecked(False)
+            self.dlg.Sel_centre_R.setChecked(False)
+            self.dlg.Sel_centre_Sc.setChecked(False)
+            self.dlg.out_Ledit.setEnabled(False)
+            self.dlg.out_Label.setEnabled(False)
+            self.dlg.format_Label.setEnabled(False)
+            self.dlg.format_Cbox.setEnabled(False)
+            self.dlg.out_TButton.setEnabled(False)
+            self.dlg.Overwrite_CheckB.setEnabled(False)
+
+            # Connect widgets with functions
+            self.dlg.Transform1_Push.clicked.connect(self.transform)
+            self.dlg.GetP_Count.clicked.connect(self.get_params_count)
+            self.dlg.GetP_Translation.clicked.connect(self.get_params_translation)
+            self.dlg.GetP_Scaling.clicked.connect(self.get_params_scaling)
+            self.dlg.GetP_Rotation.clicked.connect(self.get_params_rotation)
+            self.dlg.out_TButton.clicked.connect(self.select_output_directory)
+            self.dlg.Memory_Rb.toggled.connect(self.disable_output)
+            self.dlg.Default_PushB.clicked.connect(self.reset_setup)
+            self.dlg.Refresh_PushB.clicked.connect(self.refresh_layers)
+
+            self.first_start = False
+
+        # Clear widgets
         self.dlg.Slayer_Cbox.clear()
         self.dlg.Source_Cbox.clear()
         self.dlg.Target_Cbox.clear()
         self.dlg.Sc_Cbox.clear()
         self.dlg.Rot_Cbox.clear()
         self.dlg.format_Cbox.clear()
-        self.dlg.a_Ledit.clear()
-        self.dlg.b_Ledit.clear()
-        self.dlg.c_Ledit.clear()
-        self.dlg.d_Ledit.clear()
-        self.dlg.e_Ledit.clear()
-        self.dlg.f_Ledit.clear()
-        self.dlg.out_Ledit.clear()
-        self.dlg.Tr_x_Ledit.clear()
-        self.dlg.Tr_y_Ledit.clear()
-        self.dlg.Sc_x_Ledit.clear()
-        self.dlg.Sc_y_Ledit.clear()
-
-        self.dlg.Name_Ledit.setText('New_transformed_layer')
-        self.dlg.Memory_Rb.setChecked(True)
-        self.dlg.Add_CheckB.setChecked(True)
-        self.dlg.Overwrite_CheckB.setChecked(True)
-        self.dlg.Selected_CheckB.setChecked(False)
-        self.dlg.out_Ledit.setEnabled(False)
-        self.dlg.out_Label.setEnabled(False)
-        self.dlg.format_Label.setEnabled(False)
-        self.dlg.format_Cbox.setEnabled(False)
-        self.dlg.out_TButton.setEnabled(False)
-        self.dlg.Overwrite_CheckB.setEnabled(False)
 
         # Load vector layers
         for layer in QgsProject.instance().mapLayers().values():
@@ -243,15 +262,6 @@ class Affine:
         
         self.dlg.Rot_Cbox.addItem('Origin of coor. sys.')
         self.dlg.Sc_Cbox.addItem('Origin of coor. sys.')
-
-        self.dlg.Transform1_Push.clicked.connect(self.transform)
-        self.dlg.GetP_Count.clicked.connect(self.get_params_count)
-        self.dlg.GetP_Translation.clicked.connect(self.get_params_translation)
-        self.dlg.GetP_Scaling.clicked.connect(self.get_params_scaling)
-        self.dlg.GetP_Rotation.clicked.connect(self.get_params_rotation)
-        self.dlg.out_TButton.clicked.connect(self.select_output_directory)
-        self.dlg.Memory_Rb.toggled.connect(self.disable_output)
-        self.dlg.Selected_CheckB.toggled.connect(self.disable_whole_layer)
 
         # Load output formats
         self.dlg.format_Cbox.addItem('GPKG')
@@ -276,20 +286,63 @@ class Affine:
             self.dlg.out_TButton.setEnabled(True)
             self.dlg.Overwrite_CheckB.setEnabled(True)
 
-    def disable_whole_layer(self):
-        if self.dlg.Selected_CheckB.isChecked():
-            self.dlg.Slayer1.setEnabled(False)
-            self.dlg.Slayer_Cbox.setEnabled(False)
-        else:
-            self.dlg.Slayer1.setEnabled(True)
-            self.dlg.Slayer_Cbox.setEnabled(True)
-
     def select_output_directory(self):
         """Lets user to choose output directory"""
         self.dirname = QFileDialog.getExistingDirectory(
             self.dlg, "Select directory ", os.path.expanduser("~")
         )
         self.dlg.out_Ledit.setText(self.dirname)
+
+    def reset_setup(self):
+        """Sets default setup"""
+
+        self.dlg.a_Ledit.clear()
+        self.dlg.b_Ledit.clear()
+        self.dlg.c_Ledit.clear()
+        self.dlg.d_Ledit.clear()
+        self.dlg.e_Ledit.clear()
+        self.dlg.f_Ledit.clear()
+        self.dlg.out_Ledit.clear()
+        self.dlg.Rot_ang_Ledit.clear()
+        self.dlg.Tr_x_Ledit.clear()
+        self.dlg.Tr_y_Ledit.clear()
+        self.dlg.Sc_x_Ledit.clear()
+        self.dlg.Sc_y_Ledit.clear()
+        self.dlg.Name_Ledit.setText('New_transformed_layer')
+        self.dlg.Memory_Rb.setChecked(True)
+        self.dlg.Add_CheckB.setChecked(True)
+        self.dlg.Overwrite_CheckB.setChecked(True)
+        self.dlg.Selected_CheckB.setChecked(False)
+        self.dlg.Sel_centre_R.setChecked(False)
+        self.dlg.Sel_centre_Sc.setChecked(False)
+        self.dlg.out_Ledit.setEnabled(False)
+        self.dlg.out_Label.setEnabled(False)
+        self.dlg.format_Label.setEnabled(False)
+        self.dlg.format_Cbox.setEnabled(False)
+        self.dlg.out_TButton.setEnabled(False)
+        self.dlg.Overwrite_CheckB.setEnabled(False)
+
+    def refresh_layers(self):
+        """Refreshs layers in comboboxes"""
+
+        self.dlg.Slayer_Cbox.clear()
+        self.dlg.Source_Cbox.clear()
+        self.dlg.Target_Cbox.clear()
+        self.dlg.Sc_Cbox.clear()
+        self.dlg.Rot_Cbox.clear()
+
+        for layer in QgsProject.instance().mapLayers().values():
+            if layer.type() == QgsMapLayer.VectorLayer:
+                self.dlg.Slayer_Cbox.addItem(layer.name())
+                self.dlg.Source_Cbox.addItem(layer.name())
+                self.dlg.Target_Cbox.addItem(layer.name())
+                self.dlg.Rot_Cbox.addItem(layer.name())
+                self.dlg.Sc_Cbox.addItem(layer.name())
+            else:
+                continue
+        
+        self.dlg.Rot_Cbox.addItem('Origin of coor. sys.')
+        self.dlg.Sc_Cbox.addItem('Origin of coor. sys.')
 
     def get_params_count(self):
         """Gets parameters counted from source and target single point layers"""
@@ -351,8 +404,41 @@ class Affine:
     def get_params_rotation(self):
         """Gets parameters for rotation"""
         angle = float(self.dlg.Rot_ang_Ledit.text())/180*math.pi
+        nop = 0
         centre_lay_name = self.dlg.Rot_Cbox.currentText()
-        if centre_lay_name == 'Origin of coor. sys.':
+        if self.dlg.Sel_centre_R.isChecked():
+            centre_lay = QgsProject.instance().mapLayersByName(centre_lay_name)[0]
+            centre_feat = centre_lay.selectedFeatures()
+            if centre_lay.geometryType() == QgsWkbTypes.PointGeometry:
+                if QgsWkbTypes.isSingleType(centre_lay.wkbType()):
+                    for feature in centre_feat:
+                        nop += 1
+                        if nop != 1:
+                            self.iface.messageBar().pushMessage("Only 1 point can be selected as centre!", level=Qgis.Critical, duration=4)
+                            centre_x = 'none'
+                            centre_y = 'none'
+                            break
+                        centre_x = feature.geometry().asPoint().x()
+                        centre_y = feature.geometry().asPoint().y()
+                else:
+                    for feature in centre_feat:
+                        centre_seg = feature.geometry().asMultiPoint()
+                        for segment in centre_seg:
+                            nop += 1
+                            if nop != 1:
+                                self.iface.messageBar().pushMessage("Only 1 point can be selected as centre!", level=Qgis.Critical, duration=4)
+                                centre_x = 'none'
+                                centre_y = 'none'
+                                break
+                            centre_x = segment.x()
+                            centre_y = segment.y()
+                        if nop != 1:
+                            break
+            else:
+                self.iface.messageBar().pushMessage("Centre of rotation has to be point!", level=Qgis.Critical, duration=4)
+                centre_x = 'none'
+                centre_y = 'none'
+        elif centre_lay_name == 'Origin of coor. sys.':
             centre_x = 0
             centre_y = 0
         else:
@@ -360,12 +446,17 @@ class Affine:
             centre_x = (centre_lay.extent().xMaximum() + centre_lay.extent().xMinimum())/2
             centre_y = (centre_lay.extent().yMaximum() + centre_lay.extent().yMinimum())/2
 
-        self.dlg.a_Ledit.setText(str(math.cos(angle)))
-        self.dlg.b_Ledit.setText(str(-math.sin(angle)))
-        self.dlg.c_Ledit.setText(str(-centre_x*math.cos(angle)+centre_y*math.sin(angle)+centre_x))
-        self.dlg.d_Ledit.setText(str(math.sin(angle)))
-        self.dlg.e_Ledit.setText(str(math.cos(angle)))
-        self.dlg.f_Ledit.setText(str(-centre_x*math.sin(angle)-centre_y*math.cos(angle)+centre_y))
+        if nop == 0:
+            self.iface.messageBar().pushMessage("There are no selected points in the layer!", level=Qgis.Critical, duration=4)
+        elif (centre_x == 'none') or (centre_y == 'none'):
+            self.iface.messageBar().pushMessage("Error!", level=Qgis.Critical, duration=1)
+        else:
+            self.dlg.a_Ledit.setText(str(math.cos(angle)))
+            self.dlg.b_Ledit.setText(str(-math.sin(angle)))
+            self.dlg.c_Ledit.setText(str(-centre_x*math.cos(angle)+centre_y*math.sin(angle)+centre_x))
+            self.dlg.d_Ledit.setText(str(math.sin(angle)))
+            self.dlg.e_Ledit.setText(str(math.cos(angle)))
+            self.dlg.f_Ledit.setText(str(-centre_x*math.sin(angle)-centre_y*math.cos(angle)+centre_y))
 
     def get_params_translation(self):
         """Gets parameters for translation"""
@@ -383,8 +474,41 @@ class Affine:
         """Gets parameters for scaling"""
         scale_x = float(self.dlg.Sc_x_Ledit.text())
         scale_y = float(self.dlg.Sc_y_Ledit.text())
+        nop = 0
         centre_lay_name = self.dlg.Sc_Cbox.currentText()
-        if centre_lay_name == 'Origin of coor. sys.':
+        if self.dlg.Sel_centre_Sc.isChecked():
+            centre_lay = QgsProject.instance().mapLayersByName(centre_lay_name)[0]
+            centre_feat = centre_lay.selectedFeatures()
+            if centre_lay.geometryType() == QgsWkbTypes.PointGeometry:
+                if QgsWkbTypes.isSingleType(centre_lay.wkbType()):
+                    for feature in centre_feat:
+                        nop += 1
+                        if nop != 1:
+                            self.iface.messageBar().pushMessage("Only 1 point can be selected as centre!", level=Qgis.Critical, duration=4)
+                            centre_x = 'none'
+                            centre_y = 'none'
+                            break
+                        centre_x = feature.geometry().asPoint().x()
+                        centre_y = feature.geometry().asPoint().y()
+                else:
+                    for feature in centre_feat:
+                        centre_seg = feature.geometry().asMultiPoint()
+                        for segment in centre_seg:
+                            nop += 1
+                            if nop != 1:
+                                self.iface.messageBar().pushMessage("Only 1 point can be selected as centre!", level=Qgis.Critical, duration=4)
+                                centre_x = 'none'
+                                centre_y = 'none'
+                                break
+                            centre_x = segment.x()
+                            centre_y = segment.y()
+                        if nop != 1:
+                            break
+            else:
+                self.iface.messageBar().pushMessage("Centre of scaling has to be point!", level=Qgis.Critical, duration=4)
+                centre_x = 'none'
+                centre_y = 'none'
+        elif centre_lay_name == 'Origin of coor. sys.':
             centre_x = 0
             centre_y = 0
         else:
@@ -392,12 +516,17 @@ class Affine:
             centre_x = (centre_lay.extent().xMaximum() + centre_lay.extent().xMinimum())/2
             centre_y = (centre_lay.extent().yMaximum() + centre_lay.extent().yMinimum())/2
 
-        self.dlg.a_Ledit.setText(str(scale_x))
-        self.dlg.b_Ledit.setText(str(0))
-        self.dlg.c_Ledit.setText(str((1-scale_x)*centre_x))
-        self.dlg.d_Ledit.setText(str(0))
-        self.dlg.e_Ledit.setText(str(scale_y))
-        self.dlg.f_Ledit.setText(str((1-scale_y)*centre_y))
+        if nop == 0:
+            self.iface.messageBar().pushMessage("There are no selected points in the layer!", level=Qgis.Critical, duration=4)
+        elif (centre_x == 'none') or (centre_y == 'none'):
+            self.iface.messageBar().pushMessage("Error!", level=Qgis.Critical, duration=1)
+        else:
+            self.dlg.a_Ledit.setText(str(scale_x))
+            self.dlg.b_Ledit.setText(str(0))
+            self.dlg.c_Ledit.setText(str((1-scale_x)*centre_x))
+            self.dlg.d_Ledit.setText(str(0))
+            self.dlg.e_Ledit.setText(str(scale_y))
+            self.dlg.f_Ledit.setText(str((1-scale_y)*centre_y))
 
     def transform(self):
         """Transforms features in selected layer"""
@@ -407,8 +536,6 @@ class Affine:
         crs = layer.crs().authid()
         layer_features = layer.getFeatures()
         if self.dlg.Selected_CheckB.isChecked():
-            layer = self.iface.activeLayer()
-            crs = self.iface.activeLayer().crs().authid()
             layer_features = layer.selectedFeatures()
         out = self.dlg.out_Ledit.text()
         name = self.dlg.Name_Ledit.text()

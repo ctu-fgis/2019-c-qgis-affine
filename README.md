@@ -1,6 +1,6 @@
 # Assignment
 
-Affine plugin: Plugin transforms selected features using affine transformation. It is also possible to rotate features around selected point...
+Affine transformer plugin: Plugin for transformation of layers or selected features according to parameters, which can be setted or counted for specific geometric operations (rotation, translation,...)
 
 # Author
 

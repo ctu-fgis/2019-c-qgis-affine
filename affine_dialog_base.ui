@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>814</width>
-    <height>585</height>
+    <height>595</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -262,8 +262,8 @@
   <widget class="QPushButton" name="Transform1_Push">
    <property name="geometry">
     <rect>
-     <x>380</x>
-     <y>510</y>
+     <x>370</x>
+     <y>520</y>
      <width>111</width>
      <height>51</height>
     </rect>
@@ -495,7 +495,7 @@
    <property name="geometry">
     <rect>
      <x>610</x>
-     <y>110</y>
+     <y>100</y>
      <width>101</width>
      <height>31</height>
     </rect>
@@ -508,7 +508,7 @@
    <property name="geometry">
     <rect>
      <x>510</x>
-     <y>140</y>
+     <y>130</y>
      <width>311</width>
      <height>16</height>
     </rect>
@@ -521,7 +521,7 @@
    <property name="geometry">
     <rect>
      <x>520</x>
-     <y>150</y>
+     <y>140</y>
      <width>121</width>
      <height>16</height>
     </rect>
@@ -534,7 +534,7 @@
    <property name="geometry">
     <rect>
      <x>520</x>
-     <y>440</y>
+     <y>420</y>
      <width>101</width>
      <height>16</height>
     </rect>
@@ -547,7 +547,7 @@
    <property name="geometry">
     <rect>
      <x>520</x>
-     <y>310</y>
+     <y>290</y>
      <width>121</width>
      <height>16</height>
     </rect>
@@ -560,7 +560,7 @@
    <property name="geometry">
     <rect>
      <x>540</x>
-     <y>490</y>
+     <y>500</y>
      <width>71</width>
      <height>21</height>
     </rect>
@@ -573,7 +573,7 @@
    <property name="geometry">
     <rect>
      <x>680</x>
-     <y>490</y>
+     <y>500</y>
      <width>121</width>
      <height>20</height>
     </rect>
@@ -583,7 +583,7 @@
    <property name="geometry">
     <rect>
      <x>610</x>
-     <y>270</y>
+     <y>250</y>
      <width>101</width>
      <height>31</height>
     </rect>
@@ -596,7 +596,7 @@
    <property name="geometry">
     <rect>
      <x>610</x>
-     <y>400</y>
+     <y>380</y>
      <width>101</width>
      <height>31</height>
     </rect>
@@ -609,7 +609,7 @@
    <property name="geometry">
     <rect>
      <x>610</x>
-     <y>550</y>
+     <y>560</y>
      <width>101</width>
      <height>31</height>
     </rect>
@@ -622,7 +622,7 @@
    <property name="geometry">
     <rect>
      <x>510</x>
-     <y>430</y>
+     <y>410</y>
      <width>311</width>
      <height>16</height>
     </rect>
@@ -635,7 +635,7 @@
    <property name="geometry">
     <rect>
      <x>540</x>
-     <y>340</y>
+     <y>320</y>
      <width>101</width>
      <height>21</height>
     </rect>
@@ -648,7 +648,7 @@
    <property name="geometry">
     <rect>
      <x>540</x>
-     <y>370</y>
+     <y>350</y>
      <width>101</width>
      <height>21</height>
     </rect>
@@ -661,7 +661,7 @@
    <property name="geometry">
     <rect>
      <x>680</x>
-     <y>340</y>
+     <y>320</y>
      <width>121</width>
      <height>20</height>
     </rect>
@@ -671,7 +671,7 @@
    <property name="geometry">
     <rect>
      <x>680</x>
-     <y>370</y>
+     <y>350</y>
      <width>121</width>
      <height>20</height>
     </rect>
@@ -681,7 +681,7 @@
    <property name="geometry">
     <rect>
      <x>510</x>
-     <y>300</y>
+     <y>280</y>
      <width>311</width>
      <height>16</height>
     </rect>
@@ -694,7 +694,7 @@
    <property name="geometry">
     <rect>
      <x>540</x>
-     <y>520</y>
+     <y>530</y>
      <width>81</width>
      <height>21</height>
     </rect>
@@ -707,17 +707,17 @@
    <property name="geometry">
     <rect>
      <x>680</x>
-     <y>520</y>
+     <y>530</y>
      <width>121</width>
      <height>20</height>
     </rect>
    </property>
   </widget>
-  <widget class="QLabel" name="label_11">
+  <widget class="QLabel" name="Sc_lay_Label">
    <property name="geometry">
     <rect>
      <x>540</x>
-     <y>460</y>
+     <y>440</y>
      <width>141</width>
      <height>21</height>
     </rect>
@@ -726,11 +726,11 @@
     <string>Layer (for counting centre)</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_12">
+  <widget class="QLabel" name="R_lay_Label">
    <property name="geometry">
     <rect>
      <x>540</x>
-     <y>180</y>
+     <y>160</y>
      <width>141</width>
      <height>21</height>
     </rect>
@@ -743,7 +743,7 @@
    <property name="geometry">
     <rect>
      <x>540</x>
-     <y>210</y>
+     <y>220</y>
      <width>51</width>
      <height>16</height>
     </rect>
@@ -756,7 +756,7 @@
    <property name="geometry">
     <rect>
      <x>680</x>
-     <y>460</y>
+     <y>440</y>
      <width>121</width>
      <height>22</height>
     </rect>
@@ -766,7 +766,7 @@
    <property name="geometry">
     <rect>
      <x>680</x>
-     <y>180</y>
+     <y>160</y>
      <width>121</width>
      <height>22</height>
     </rect>
@@ -776,7 +776,7 @@
    <property name="geometry">
     <rect>
      <x>680</x>
-     <y>210</y>
+     <y>220</y>
      <width>121</width>
      <height>20</height>
     </rect>
@@ -842,12 +842,64 @@
     <rect>
      <x>10</x>
      <y>40</y>
-     <width>201</width>
+     <width>131</width>
      <height>21</height>
     </rect>
    </property>
    <property name="text">
-    <string>Only selected features in active layer</string>
+    <string>Only selected features</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="Sel_centre_R">
+   <property name="geometry">
+    <rect>
+     <x>540</x>
+     <y>190</y>
+     <width>171</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Selected 1 point in layer</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="Sel_centre_Sc">
+   <property name="geometry">
+    <rect>
+     <x>540</x>
+     <y>470</y>
+     <width>171</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Selected 1 point in layer</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Default_PushB">
+   <property name="geometry">
+    <rect>
+     <x>420</x>
+     <y>10</y>
+     <width>85</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Default setup</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Refresh_PushB">
+   <property name="geometry">
+    <rect>
+     <x>420</x>
+     <y>40</y>
+     <width>85</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Refresh layers</string>
    </property>
   </widget>
  </widget>
