@@ -565,6 +565,11 @@ class Affine:
                 self.iface.messageBar().pushMessage('Memory layer created.', level=Qgis.Success, duration=3)
                 if self.dlg.Add_CheckB.isChecked():
                     QgsProject.instance().addMapLayer(layer_new)
+                    self.dlg.Slayer_Cbox.addItem(layer_new.name())
+                    self.dlg.Source_Cbox.addItem(layer_new.name())
+                    self.dlg.Target_Cbox.addItem(layer_new.name())
+                    self.dlg.Rot_Cbox.addItem(layer_new.name())
+                    self.dlg.Sc_Cbox.addItem(layer_new.name())
             
             # creating file with new layer
             if self.dlg.File_Rb.isChecked():
@@ -584,3 +589,8 @@ class Affine:
                 
                 if self.dlg.Add_CheckB.isChecked():
                     QgsProject.instance().addMapLayer(QgsVectorLayer(path = out + '/' + name + '.' + format,baseName = name))
+                    self.dlg.Slayer_Cbox.addItem(layer_new.name())
+                    self.dlg.Source_Cbox.addItem(layer_new.name())
+                    self.dlg.Target_Cbox.addItem(layer_new.name())
+                    self.dlg.Rot_Cbox.addItem(layer_new.name())
+                    self.dlg.Sc_Cbox.addItem(layer_new.name())
