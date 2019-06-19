@@ -420,6 +420,9 @@ class Affine:
                             break
                         centre_x = feature.geometry().asPoint().x()
                         centre_y = feature.geometry().asPoint().y()
+                    if nop == 0:
+                        centre_x = 'nosel'
+                        centre_y = 'nosel'
                 else:
                     for feature in centre_feat:
                         centre_seg = feature.geometry().asMultiPoint()
@@ -434,19 +437,23 @@ class Affine:
                             centre_y = segment.y()
                         if nop != 1:
                             break
+                    if nop == 0:
+                        centre_x = 'nosel'
+                        centre_y = 'nosel'
             else:
                 self.iface.messageBar().pushMessage("Centre of rotation has to be point!", level=Qgis.Critical, duration=4)
                 centre_x = 'none'
                 centre_y = 'none'
-        elif centre_lay_name == 'Origin of coor. sys.':
-            centre_x = 0
-            centre_y = 0
         else:
-            centre_lay = QgsProject.instance().mapLayersByName(centre_lay_name)[0]
-            centre_x = (centre_lay.extent().xMaximum() + centre_lay.extent().xMinimum())/2
-            centre_y = (centre_lay.extent().yMaximum() + centre_lay.extent().yMinimum())/2
+            if centre_lay_name == 'Origin of coor. sys.':
+                centre_x = 0
+                centre_y = 0
+            else:
+                centre_lay = QgsProject.instance().mapLayersByName(centre_lay_name)[0]
+                centre_x = (centre_lay.extent().xMaximum() + centre_lay.extent().xMinimum())/2
+                centre_y = (centre_lay.extent().yMaximum() + centre_lay.extent().yMinimum())/2
 
-        if nop == 0:
+        if (centre_x == 'nosel') or (centre_y == 'nosel'):
             self.iface.messageBar().pushMessage("There are no selected points in the layer!", level=Qgis.Critical, duration=4)
         elif (centre_x == 'none') or (centre_y == 'none'):
             self.iface.messageBar().pushMessage("Error!", level=Qgis.Critical, duration=1)
@@ -490,6 +497,9 @@ class Affine:
                             break
                         centre_x = feature.geometry().asPoint().x()
                         centre_y = feature.geometry().asPoint().y()
+                    if nop == 0:
+                        centre_x = 'nosel'
+                        centre_y = 'nosel'
                 else:
                     for feature in centre_feat:
                         centre_seg = feature.geometry().asMultiPoint()
@@ -504,19 +514,23 @@ class Affine:
                             centre_y = segment.y()
                         if nop != 1:
                             break
+                    if nop == 0:
+                        centre_x = 'nosel'
+                        centre_y = 'nosel'
             else:
                 self.iface.messageBar().pushMessage("Centre of scaling has to be point!", level=Qgis.Critical, duration=4)
                 centre_x = 'none'
                 centre_y = 'none'
-        elif centre_lay_name == 'Origin of coor. sys.':
-            centre_x = 0
-            centre_y = 0
         else:
-            centre_lay = QgsProject.instance().mapLayersByName(centre_lay_name)[0]
-            centre_x = (centre_lay.extent().xMaximum() + centre_lay.extent().xMinimum())/2
-            centre_y = (centre_lay.extent().yMaximum() + centre_lay.extent().yMinimum())/2
+            if centre_lay_name == 'Origin of coor. sys.':
+                centre_x = 0
+                centre_y = 0
+            else:
+                centre_lay = QgsProject.instance().mapLayersByName(centre_lay_name)[0]
+                centre_x = (centre_lay.extent().xMaximum() + centre_lay.extent().xMinimum())/2
+                centre_y = (centre_lay.extent().yMaximum() + centre_lay.extent().yMinimum())/2
 
-        if nop == 0:
+        if (centre_x == 'nosel') or (centre_y == 'nosel'):
             self.iface.messageBar().pushMessage("There are no selected points in the layer!", level=Qgis.Critical, duration=4)
         elif (centre_x == 'none') or (centre_y == 'none'):
             self.iface.messageBar().pushMessage("Error!", level=Qgis.Critical, duration=1)
